@@ -1,0 +1,13 @@
+{
+  "name": "expertly-website",
+  "version": "1.0.0",
+  "description": "Official website for Expertly",
+  "scripts": {
+    "build": "echo Building website...",
+    "deploy:staging": "echo Deploying to staging...",
+    "deploy:production": "echo Deploying to production..."
+  },
+  "keywords": ["website", "expertly", "aws", "s3"],
+  "author": "Expertly",
+  "license": "UNLICENSED"
+}
