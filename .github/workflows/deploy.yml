@@ -1,29 +1,27 @@
-name: 🚀 Deploy Expertly Website
+name: 🚀 Deploy Expertly Website - Staging → Approval → Production
 
 on:
   push:
     branches:
-      - main        # Production deployment
-      - staging     # Staging deployment
+      - main
+      - develop
+      - staging
   pull_request:
     branches:
       - main
 
 jobs:
-  deploy:
-    name: 🌍 Deploy to AWS S3
+  # ===============================
+  # STAGING DEPLOYMENT (AUTOMATIC)
+  # ===============================
+  deploy-staging:
+    name: 🧪 Deploy to Staging
     runs-on: ubuntu-latest
     
     steps:
-      # ===============================
-      # CHECKOUT CODE
-      # ===============================
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
-      # ===============================
-      # CONFIGURE AWS CREDENTIALS
-      # ===============================
       - name: 🔐 Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -31,11 +29,94 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # ===============================
-      # PRODUCTION DEPLOYMENT
-      # ===============================
-      - name: 🚀 Deploy to Production S3
-        if: github.ref == 'refs/heads/main'
+      - name: 🧪 Deploy to Staging S3
+        run: |
+          echo "🧪 Deploying to Staging: awsstgqa.expertly.co.in"
+          aws s3 sync src/ s3://${{ secrets.S3_STAGING_BUCKET }} \
+            --delete \
+            --exact-timestamps \
+            --cache-control "max-age=300" \
+            --exclude "*.DS_Store" \
+            --exclude "*.git*"
+          echo "✅ Staging deployment completed"
+
+      - name: ⚡ Invalidate Staging CloudFront Cache
+        run: |
+          echo "⚡ Clearing staging CloudFront cache"
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+          echo "✅ Staging cache invalidation completed"
+
+      - name: 🔍 Validate Staging Deployment
+        run: |
+          echo "🔍 Validating staging deployment..."
+          sleep 30
+          
+          if curl -f -s -o /dev/null https://awsstgqa.expertly.co.in; then
+            echo "✅ Staging website is accessible"
+            echo "🧪 Review at: https://awsstgqa.expertly.co.in"
+          else
+            echo "❌ Staging validation failed"
+            exit 1
+          fi
+
+      - name: 📊 Staging Deployment Summary
+        run: |
+          echo "================================================"
+          echo "🧪 STAGING DEPLOYMENT COMPLETED"
+          echo "================================================"
+          echo "🔗 Staging URL: https://awsstgqa.expertly.co.in"
+          echo "📦 S3 Bucket: ${{ secrets.S3_STAGING_BUCKET }}"
+          echo "⚡ CloudFront: Cache cleared"
+          echo "🎯 Ready for review and approval"
+          echo "================================================"
+          echo "✅ Please review staging site before approving production deployment"
+
+  # ===============================
+  # MANUAL APPROVAL FOR PRODUCTION
+  # ===============================
+  approval:
+    name: 📋 Manual Approval Required
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    environment: 
+      name: production-approval
+      url: https://awsstgqa.expertly.co.in
+    
+    steps:
+      - name: 📋 Approval Gate
+        run: |
+          echo "🔒 PRODUCTION DEPLOYMENT APPROVAL REQUIRED"
+          echo "================================================"
+          echo "🧪 Staging Review: https://awsstgqa.expertly.co.in"
+          echo "🎯 Production Target: https://expertly.co.in"
+          echo "================================================"
+          echo "✅ Manual approval required to proceed to production"
+          echo "⏸️  This job will wait for manual approval..."
+
+  # ===============================
+  # PRODUCTION DEPLOYMENT (AFTER APPROVAL)
+  # ===============================
+  deploy-production:
+    name: 🌍 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, approval]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🌍 Deploy to Production S3
         run: |
           echo "🌍 Deploying to Production: expertly.co.in"
           aws s3 sync src/ s3://${{ secrets.S3_PRODUCTION_BUCKET }} \
@@ -46,89 +127,71 @@ jobs:
             --exclude "*.git*"
           echo "✅ Production deployment completed"
 
-      # ===============================
-      # STAGING DEPLOYMENT
-      # ===============================
-      - name: 🧪 Deploy to Staging S3
-        if: github.ref == 'refs/heads/staging'
+      - name: ⚡ Invalidate Production CloudFront Cache
         run: |
-          echo "🧪 Deploying to Staging: awsstgqa.expertly.co.in"
-          aws s3 sync src/ s3://${{ secrets.S3_STAGING_BUCKET }} \
-            --delete \
-            --exact-timestamps \
-            --cache-control "max-age=3600" \
-            --exclude "*.DS_Store" \
-            --exclude "*.git*"
-          echo "✅ Staging deployment completed"
-
-      # ===============================
-      # CLOUDFRONT CACHE INVALIDATION
-      # ===============================
-      - name: ⚡ Invalidate CloudFront Cache
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "⚡ Clearing CloudFront cache for instant updates"
+          echo "⚡ Clearing production CloudFront cache"
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
-          echo "✅ Cache invalidation initiated"
+          echo "✅ Production cache invalidation completed"
 
-      # ===============================
-      # DEPLOYMENT SUMMARY
-      # ===============================
-      - name: 📊 Deployment Summary
+      - name: 🔍 Validate Production Deployment
         run: |
-          echo "================================================"
-          echo "🎉 EXPERTLY WEBSITE DEPLOYMENT COMPLETED"
-          echo "================================================"
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "🌍 Environment: PRODUCTION"
-            echo "🔗 URL: https://expertly.co.in"
-            echo "📦 S3 Bucket: ${{ secrets.S3_PRODUCTION_BUCKET }}"
-            echo "⚡ CloudFront: Cache invalidated"
-          elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
-            echo "🧪 Environment: STAGING"
-            echo "🔗 URL: https://awsstgqa.expertly.co.in"
-            echo "📦 S3 Bucket: ${{ secrets.S3_STAGING_BUCKET }}"
-          fi
-          echo "================================================"
-          echo "✅ Deployment successful at $(date)"
-          echo "🚀 Your fintech cybersecurity website is live!"
-
-  # ===============================
-  # VALIDATION JOB
-  # ===============================
-  validate:
-    name: 🔍 Validate Deployment
-    runs-on: ubuntu-latest
-    needs: deploy
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: 🔍 Validate Production Website
-        run: |
-          echo "🔍 Validating website accessibility..."
-          
-          # Wait for deployment to propagate
+          echo "🔍 Validating production deployment..."
           sleep 30
           
-          # Check if website is accessible
           if curl -f -s -o /dev/null https://expertly.co.in; then
-            echo "✅ Website is accessible at https://expertly.co.in"
-            echo "🎉 Validation successful!"
+            echo "✅ Production website is accessible"
+            echo "🌍 Live at: https://expertly.co.in"
           else
-            echo "❌ Website validation failed"
+            echo "❌ Production validation failed"
             exit 1
           fi
 
-      - name: 📈 Performance Check
+      - name: 🎉 Production Deployment Summary
         run: |
-          echo "📈 Running basic performance check..."
-          response_time=$(curl -o /dev/null -s -w "%{time_total}" https://expertly.co.in)
-          echo "⏱️  Response time: ${response_time}s"
+          echo "================================================"
+          echo "🎉 PRODUCTION DEPLOYMENT COMPLETED"
+          echo "================================================"
+          echo "🌍 Live URL: https://expertly.co.in"
+          echo "📦 S3 Bucket: ${{ secrets.S3_PRODUCTION_BUCKET }}"
+          echo "⚡ CloudFront: Cache cleared"
+          echo "✅ Deployment successful at $(date)"
+          echo "🚀 Your fintech cybersecurity website is live!"
+          echo "================================================"
+
+  # ===============================
+  # DEVELOPMENT BUILDS (NO APPROVAL)
+  # ===============================
+  dev-deploy:
+    name: 🛠️ Development Deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🛠️ Deploy to Staging (Dev Branch)
+        run: |
+          echo "🛠️ Development deployment to staging"
+          aws s3 sync src/ s3://${{ secrets.S3_STAGING_BUCKET }} \
+            --delete \
+            --exact-timestamps \
+            --cache-control "max-age=60" \
+            --exclude "*.DS_Store" \
+            --exclude "*.git*"
           
-          if (( $(echo "$response_time < 3.0" | bc -l) )); then
-            echo "✅ Performance check passed (< 3s)"
-          else
-            echo "⚠️  Warning: Response time is slower than expected"
-          fi
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+          
+          echo "✅ Development build deployed to staging"
+          echo "🔗 Review at: https://awsstgqa.expertly.co.in"
