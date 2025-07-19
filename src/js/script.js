@@ -9,14 +9,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // ENVIRONMENT-AWARE DEMO LINK (set href before event listeners)
     // ===============================
     var demoLink = document.getElementById('demo-link');
-    if (demoLink) {
-      if (window.location.hostname.includes('stg') || window.location.hostname === 'awsstgqa.expertly.co.in') {
-        demoLink.href = 'https://demostg.expertly.co.in';
-      } else {
-        demoLink.href = 'https://proddemo.expertly.co.in';
-      }
-      console.log('Demo link href set to:', demoLink.href);
+    var techDemoLink = document.getElementById('tech-demo-link');
+
+    if (window.location.hostname.includes('stg') || window.location.hostname === 'awsstgqa.expertly.co.in') {
+      if (demoLink) demoLink.href = 'https://demostg.expertly.co.in';
+      if (techDemoLink) techDemoLink.href = 'https://demostg.expertly.co.in';
+    } else {
+      if (demoLink) demoLink.href = 'https://proddemo.expertly.co.in';
+      if (techDemoLink) techDemoLink.href = 'https://proddemo.expertly.co.in';
     }
+
+    console.log('Demo links set - Nav:', demoLink?.href, 'Tech:', techDemoLink?.href);
 
     // ===============================
     // SMOOTH SCROLLING FOR NAVIGATION
