@@ -251,6 +251,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.addEventListener('scroll', optimizedScrollHandler);
 
+    var demoLink = document.getElementById('demo-link');
+    if (demoLink) {
+      if (window.location.hostname.includes('stg') || window.location.hostname === 'awsstgqa.expertly.co.in') {
+        demoLink.href = 'https://demostg.expertly.co.in';
+      } else {
+        demoLink.href = 'https://proddemo.expertly.co.in';
+      }
+    }
+
     console.log('All interactive features initialized successfully');
 });
 
