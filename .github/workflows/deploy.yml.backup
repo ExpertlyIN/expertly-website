@@ -1,0 +1,123 @@
+name: 🚀 Deploy Expertly Website - Staging → Approval → Production
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - staging
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ===============================
+  # STAGING DEPLOYMENT (AUTOMATIC)
+  # ===============================
+  deploy-staging:
+    name: 🧪 Deploy to Staging
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🧪 Deploy to Staging S3
+        run: |
+          echo "🧪 Deploying to Staging: awsstgqa.expertly.co.in"
+          aws s3 sync src/ s3://${{ secrets.S3_STAGING_BUCKET }} \
+            --delete \
+            --exact-timestamps \
+            --cache-control "max-age=300" \
+            --exclude "*.DS_Store" \
+            --exclude "*.git*"
+          echo "✅ Staging deployment completed"
+
+      - name: ⚡ Invalidate Staging CloudFront Cache
+        run: |
+          echo "⚡ Clearing staging CloudFront cache"
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+          echo "✅ Staging cache invalidation completed"
+
+      - name: 🔍 Validate Staging Deployment
+        run: |
+          echo "🔍 Validating staging deployment..."
+          sleep 30
+          
+          if curl -f -s -o /dev/null https://awsstgqa.expertly.co.in; then
+            echo "✅ Staging website is accessible"
+            echo "🧪 Review at: https://awsstgqa.expertly.co.in"
+          else
+            echo "❌ Staging validation failed"
+            exit 1
+          fi
+
+  # ===============================
+  # MANUAL APPROVAL FOR PRODUCTION
+  # ===============================
+  approval:
+    name: 📋 Manual Approval Required
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    environment: 
+      name: production-approval
+      url: https://awsstgqa.expertly.co.in
+    
+    steps:
+      - name: 📋 Approval Gate
+        run: |
+          echo "🔒 PRODUCTION DEPLOYMENT APPROVAL REQUIRED"
+          echo "================================================"
+          echo "🧪 Staging Review: https://awsstgqa.expertly.co.in"
+          echo "🎯 Production Target: https://expertly.co.in"
+          echo "================================================"
+          echo "✅ Manual approval required to proceed to production"
+
+  # ===============================
+  # PRODUCTION DEPLOYMENT (AFTER APPROVAL)
+  # ===============================
+  deploy-production:
+    name: 🌍 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, approval]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🌍 Deploy to Production S3
+        run: |
+          echo "🌍 Deploying to Production: expertly.co.in"
+          aws s3 sync src/ s3://${{ secrets.S3_PRODUCTION_BUCKET }} \
+            --delete \
+            --exact-timestamps \
+            --cache-control "max-age=86400" \
+            --exclude "*.DS_Store" \
+            --exclude "*.git*"
+          echo "✅ Production deployment completed"
+
+      - name: ⚡ Invalidate Production CloudFront Cache
+        run: |
+          echo "⚡ Clearing production CloudFront cache"
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+          echo "✅ Production cache invalidation completed"
