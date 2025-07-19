@@ -6,6 +6,19 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Expertly Website Loaded Successfully');
 
     // ===============================
+    // ENVIRONMENT-AWARE DEMO LINK (set href before event listeners)
+    // ===============================
+    var demoLink = document.getElementById('demo-link');
+    if (demoLink) {
+      if (window.location.hostname.includes('stg') || window.location.hostname === 'awsstgqa.expertly.co.in') {
+        demoLink.href = 'https://demostg.expertly.co.in';
+      } else {
+        demoLink.href = 'https://proddemo.expertly.co.in';
+      }
+      console.log('Demo link href set to:', demoLink.href);
+    }
+
+    // ===============================
     // SMOOTH SCROLLING FOR NAVIGATION
     // ===============================
     
@@ -13,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
+            console.log('Link clicked:', this.textContent, 'href:', this.getAttribute('href'));
             const targetId = this.getAttribute('href');
             // Only handle internal anchor links
             if (targetId && targetId.startsWith('#')) {
@@ -250,15 +264,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 10);
     
     window.addEventListener('scroll', optimizedScrollHandler);
-
-    var demoLink = document.getElementById('demo-link');
-    if (demoLink) {
-      if (window.location.hostname.includes('stg') || window.location.hostname === 'awsstgqa.expertly.co.in') {
-        demoLink.href = 'https://demostg.expertly.co.in';
-      } else {
-        demoLink.href = 'https://proddemo.expertly.co.in';
-      }
-    }
 
     console.log('All interactive features initialized successfully');
 });
