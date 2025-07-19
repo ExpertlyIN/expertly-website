@@ -171,7 +171,7 @@ jobs:
         run: |
           echo "⚡ Clearing main site production CloudFront cache"
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.PRODUCTION_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
           echo "✅ Main site production cache invalidation completed"
 
