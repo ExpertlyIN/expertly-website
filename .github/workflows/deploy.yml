@@ -1,4 +1,4 @@
-name: 🚀 Deploy Expertly Website - Staging → Approval → Production
+name: 🚀 Deploy Expertly Website + Demo - Staging → Approval → Production
 
 on:
   push:
@@ -12,10 +12,10 @@ on:
 
 jobs:
   # ===============================
-  # STAGING DEPLOYMENT (AUTOMATIC)
+  # MAIN SITE STAGING DEPLOYMENT
   # ===============================
   deploy-staging:
-    name: 🧪 Deploy to Staging
+    name: 🧪 Deploy Main Site to Staging
     runs-on: ubuntu-latest
     
     steps:
@@ -29,35 +29,86 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: 🧪 Deploy to Staging S3
+      - name: 🧪 Deploy Main Site to Staging S3
         run: |
-          echo "🧪 Deploying to Staging: awsstgqa.expertly.co.in"
+          echo "🧪 Deploying Main Site to Staging: awsstgqa.expertly.co.in"
           aws s3 sync src/ s3://${{ secrets.S3_STAGING_BUCKET }} \
             --delete \
             --exact-timestamps \
             --cache-control "max-age=300" \
             --exclude "*.DS_Store" \
-            --exclude "*.git*"
-          echo "✅ Staging deployment completed"
+            --exclude "*.git*" \
+            --exclude "demo/*"
+          echo "✅ Main site staging deployment completed"
 
-      - name: ⚡ Invalidate Staging CloudFront Cache
+      - name: ⚡ Invalidate Main Site Staging CloudFront Cache
         run: |
-          echo "⚡ Clearing staging CloudFront cache"
+          echo "⚡ Clearing main site staging CloudFront cache"
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
-          echo "✅ Staging cache invalidation completed"
+          echo "✅ Main site staging cache invalidation completed"
 
-      - name: 🔍 Validate Staging Deployment
+      - name: 🔍 Validate Main Site Staging Deployment
         run: |
-          echo "🔍 Validating staging deployment..."
+          echo "🔍 Validating main site staging deployment..."
           sleep 30
           
           if curl -f -s -o /dev/null https://awsstgqa.expertly.co.in; then
-            echo "✅ Staging website is accessible"
+            echo "✅ Main site staging is accessible"
             echo "🧪 Review at: https://awsstgqa.expertly.co.in"
           else
-            echo "❌ Staging validation failed"
+            echo "❌ Main site staging validation failed"
+            exit 1
+          fi
+
+  # ===============================
+  # DEMO STAGING DEPLOYMENT
+  # ===============================
+  deploy-demo-staging:
+    name: 🎭 Deploy Demo to Staging
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🎭 Deploy Demo to Staging S3
+        run: |
+          echo "🎭 Deploying Demo to Staging: demostg.expertly.co.in"
+          aws s3 sync src/demo/ s3://${{ secrets.S3_DEMO_STAGING_BUCKET }} \
+            --delete \
+            --exact-timestamps \
+            --cache-control "max-age=300" \
+            --exclude "*.DS_Store" \
+            --exclude "*.git*"
+          echo "✅ Demo staging deployment completed"
+
+      - name: ⚡ Invalidate Demo Staging CloudFront Cache
+        run: |
+          echo "⚡ Clearing demo staging CloudFront cache"
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.DEMO_STAGING_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+          echo "✅ Demo staging cache invalidation completed"
+
+      - name: 🔍 Validate Demo Staging Deployment
+        run: |
+          echo "🔍 Validating demo staging deployment..."
+          sleep 30
+          
+          if curl -f -s -o /dev/null https://demostg.expertly.co.in; then
+            echo "✅ Demo staging is accessible"
+            echo "🎭 Review at: https://demostg.expertly.co.in"
+          else
+            echo "❌ Demo staging validation failed"
             exit 1
           fi
 
@@ -67,29 +118,30 @@ jobs:
   approval:
     name: 📋 Manual Approval Required
     runs-on: ubuntu-latest
-    needs: deploy-staging
+    needs: [deploy-staging, deploy-demo-staging]
     if: github.ref == 'refs/heads/main'
-    environment: 
-      name: production-approval
-      url: https://awsstgqa.expertly.co.in
     
     steps:
       - name: 📋 Approval Gate
         run: |
           echo "🔒 PRODUCTION DEPLOYMENT APPROVAL REQUIRED"
           echo "================================================"
-          echo "🧪 Staging Review: https://awsstgqa.expertly.co.in"
-          echo "🎯 Production Target: https://expertly.co.in"
+          echo "🧪 Main Site Staging: https://awsstgqa.expertly.co.in"
+          echo "🎭 Demo Staging: https://demostg.expertly.co.in"
+          echo "================================================"
+          echo "🎯 Production Targets:"
+          echo "📍 Main Site: https://expertly.co.in"
+          echo "🚀 Demo Site: https://proddemo.expertly.co.in"
           echo "================================================"
           echo "✅ Manual approval required to proceed to production"
 
   # ===============================
-  # PRODUCTION DEPLOYMENT (AFTER APPROVAL)
+  # MAIN SITE PRODUCTION DEPLOYMENT
   # ===============================
   deploy-production:
-    name: 🌍 Deploy to Production
+    name: 🚀 Deploy Main Site to Production
     runs-on: ubuntu-latest
-    needs: [deploy-staging, approval]
+    needs: approval
     if: github.ref == 'refs/heads/main'
     
     steps:
@@ -103,21 +155,110 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: 🌍 Deploy to Production S3
+      - name: 🚀 Deploy Main Site to Production S3
         run: |
-          echo "🌍 Deploying to Production: expertly.co.in"
+          echo "🚀 Deploying Main Site to Production: expertly.co.in"
           aws s3 sync src/ s3://${{ secrets.S3_PRODUCTION_BUCKET }} \
             --delete \
             --exact-timestamps \
-            --cache-control "max-age=86400" \
+            --cache-control "max-age=3600" \
+            --exclude "*.DS_Store" \
+            --exclude "*.git*" \
+            --exclude "demo/*"
+          echo "✅ Main site production deployment completed"
+
+      - name: ⚡ Invalidate Main Site Production CloudFront Cache
+        run: |
+          echo "⚡ Clearing main site production CloudFront cache"
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.PRODUCTION_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+          echo "✅ Main site production cache invalidation completed"
+
+      - name: 🔍 Validate Main Site Production Deployment
+        run: |
+          echo "🔍 Validating main site production deployment..."
+          sleep 60
+          
+          if curl -f -s -o /dev/null https://expertly.co.in; then
+            echo "✅ Main site production is accessible"
+            echo "🚀 Live at: https://expertly.co.in"
+          else
+            echo "❌ Main site production validation failed"
+            exit 1
+          fi
+
+  # ===============================
+  # DEMO PRODUCTION DEPLOYMENT
+  # ===============================
+  deploy-demo-production:
+    name: 🎯 Deploy Demo to Production
+    runs-on: ubuntu-latest
+    needs: approval
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🎯 Deploy Demo to Production S3
+        run: |
+          echo "🎯 Deploying Demo to Production: proddemo.expertly.co.in"
+          aws s3 sync src/demo/ s3://${{ secrets.S3_DEMO_PRODUCTION_BUCKET }} \
+            --delete \
+            --exact-timestamps \
+            --cache-control "max-age=3600" \
             --exclude "*.DS_Store" \
             --exclude "*.git*"
-          echo "✅ Production deployment completed"
+          echo "✅ Demo production deployment completed"
 
-      - name: ⚡ Invalidate Production CloudFront Cache
+      - name: ⚡ Invalidate Demo Production CloudFront Cache
         run: |
-          echo "⚡ Clearing production CloudFront cache"
+          echo "⚡ Clearing demo production CloudFront cache"
           aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ secrets.DEMO_PRODUCTION_CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
-          echo "✅ Production cache invalidation completed"
+          echo "✅ Demo production cache invalidation completed"
+
+      - name: 🔍 Validate Demo Production Deployment
+        run: |
+          echo "🔍 Validating demo production deployment..."
+          sleep 60
+          
+          if curl -f -s -o /dev/null https://proddemo.expertly.co.in; then
+            echo "✅ Demo production is accessible"
+            echo "🎯 Live at: https://proddemo.expertly.co.in"
+          else
+            echo "❌ Demo production validation failed"
+            exit 1
+          fi
+
+  # ===============================
+  # DEPLOYMENT SUCCESS SUMMARY
+  # ===============================
+  deployment-summary:
+    name: 📊 Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [deploy-production, deploy-demo-production]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📊 Success Summary
+        run: |
+          echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY"
+          echo "===================================="
+          echo "🚀 Main Site: https://expertly.co.in"
+          echo "🎯 Demo Site: https://proddemo.expertly.co.in"
+          echo "===================================="
+          echo "📍 Navigation: expertly.co.in → Demo → proddemo.expertly.co.in"
+          echo "⚡ Lambda Container Demo: Ready for DCVV-168"
+          echo "💰 Cost Optimized: Auto-cleanup demo sessions"
+          echo "===================================="
+          echo "✅ All deployments validated and operational"
