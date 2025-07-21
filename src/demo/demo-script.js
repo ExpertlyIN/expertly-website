@@ -97,7 +97,7 @@
 
         // Generate session-specific endpoint
         const sessionId = this.generateSessionId();
-        this.lambdaUrl = `https://api.expertly.co.in/dcvv/demo/${sessionId}`;
+        this.lambdaUrl = `https://api-demo.expertly.co.in/demo/${sessionId}`;
         this.demoEndpoint = this.lambdaUrl;
         this.endpointDisplay.textContent = this.lambdaUrl;
     }
@@ -268,7 +268,7 @@
             examples: {
                 generate_cvv: {
                     method: "POST",
-                    url: `${this.demoEndpoint}/generate`,
+                    url: `${this.demoEndpoint}/demo/start-session`,
                     headers: {
                         "Authorization": "Bearer demo-jwt-token",
                         "Content-Type": "application/json"
