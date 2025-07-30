@@ -95,9 +95,16 @@
             await this.delay(800 + Math.random() * 400); // Realistic timing
         }
 
-        // Generate session-specific endpoint
+        // Generate session-specific endpoint (environment-aware)
         const sessionId = this.generateSessionId();
-        this.lambdaUrl = `https://api-demo.expertly.co.in/demo/${sessionId}`;
+        const host = window.location.hostname;
+        let apiDomain;
+        if (host === 'demostg.expertly.co.in' || host === 'awsstgqa.expertly.co.in') {
+            apiDomain = 'api-demo-stg.expertly.co.in';
+        } else {
+            apiDomain = 'api-demo.expertly.co.in';
+        }
+        this.lambdaUrl = `https://${apiDomain}/demo/${sessionId}`;
         this.demoEndpoint = this.lambdaUrl;
         this.endpointDisplay.textContent = this.lambdaUrl;
     }
@@ -430,3 +437,24 @@ window.addEventListener('load', () => {
     // Preload any images or resources that might be needed during demo
     console.log('🚀 DCVV Demo Ready - Expertly Fintech Cybersecurity');
 });
+
+// Make main site links environment-aware
+(function() {
+    var host = window.location.hostname;
+    var isStaging = (host === 'demostg.expertly.co.in' || host === 'awsstgqa.expertly.co.in');
+    var mainSite = isStaging ? 'https://awsstgqa.expertly.co.in' : 'https://expertly.co.in';
+    var navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(function(link) {
+        if (link.href.includes('expertly.co.in')) {
+            // Only update links that point to the main site
+            link.href = link.href.replace('https://expertly.co.in', mainSite);
+        }
+    });
+    // Also update footer resource/contact links
+    var footerLinks = document.querySelectorAll('footer a');
+    footerLinks.forEach(function(link) {
+        if (link.href.includes('expertly.co.in')) {
+            link.href = link.href.replace('https://expertly.co.in', mainSite);
+        }
+    });
+})();

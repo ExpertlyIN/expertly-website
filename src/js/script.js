@@ -11,13 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
     var demoLink = document.getElementById('demo-link');
     var techDemoLink = document.getElementById('tech-demo-link');
 
-    if (window.location.hostname.includes('stg') || window.location.hostname === 'awsstgqa.expertly.co.in') {
-      if (demoLink) demoLink.href = 'https://demostg.expertly.co.in';
-      if (techDemoLink) techDemoLink.href = 'https://demostg.expertly.co.in';
-    } else {
-      if (demoLink) demoLink.href = 'https://proddemo.expertly.co.in';
-      if (techDemoLink) techDemoLink.href = 'https://proddemo.expertly.co.in';
-    }
+    // Routing logic: awsstgqa.expertly.co.in <-> demostg.expertly.co.in
+    //                expertly.co.in <-> proddemo.expertly.co.in
+    var host = window.location.hostname;
+    var isStaging = (host === 'awsstgqa.expertly.co.in' || host === 'demostg.expertly.co.in');
+    var demoTarget = isStaging ? 'https://demostg.expertly.co.in' : 'https://proddemo.expertly.co.in';
+    if (demoLink) demoLink.href = demoTarget;
+    if (techDemoLink) techDemoLink.href = demoTarget;
 
     console.log('Demo links set - Nav:', demoLink?.href, 'Tech:', techDemoLink?.href);
 
