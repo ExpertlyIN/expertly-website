@@ -22,67 +22,110 @@
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
-/* Demo Hero Enhancements */
+/* --- Animated SVG Background for Hero --- */
 .demo-hero {
-    background: linear-gradient(135deg, 
-        rgba(10, 10, 10, 0.95) 0%, 
-        rgba(26, 26, 26, 0.95) 50%, 
-        rgba(37, 99, 235, 0.1) 100%
-    );
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
+    position: relative;
+    overflow: hidden;
 }
-
+.demo-hero::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    width: 160vw;
+    height: 120vh;
+    background: radial-gradient(circle at 60% 40%, #2563eb55 0%, #3b82f622 40%, transparent 80%),
+                linear-gradient(120deg, #2563eb22 0%, #3b82f611 100%);
+    transform: translateX(-50%) scale(1.1);
+    z-index: 0;
+    animation: heroBgMove 12s ease-in-out infinite alternate;
+}
+@keyframes heroBgMove {
+    0% { background-position: 60% 40%, 0% 0%; }
+    100% { background-position: 70% 60%, 100% 100%; }
+}
 .demo-hero-content {
-    text-align: center;
-    max-width: 800px;
-    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    /* Add a subtle drop shadow for pop */
+    box-shadow: 0 8px 32px 0 rgba(37,99,235,0.10);
+    border-radius: 24px;
+    background: rgba(20, 20, 30, 0.55);
+    backdrop-filter: blur(8px);
+    padding: 3rem 2rem 2.5rem 2rem;
+    margin-top: 3rem;
 }
 
-/* Demo Status Indicator */
-.demo-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.1);
+/* --- Glassmorphism for Feature Cards --- */
+.demo-feature {
+    background: rgba(255,255,255,0.10);
+    box-shadow: 0 4px 24px 0 rgba(37,99,235,0.08);
+    border: 1.5px solid rgba(59,130,246,0.13);
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s cubic-bezier(.4,2,.6,1), box-shadow 0.3s;
+}
+.demo-feature:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 8px 32px 0 rgba(37,99,235,0.18);
+    background: rgba(59,130,246,0.13);
+}
+.feature-icon {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 2px 8px #2563eb33);
+}
+
+/* --- Glassmorphism for Demo Session Panel --- */
+.demo-session {
+    background: rgba(30, 40, 60, 0.55);
+    box-shadow: 0 8px 32px 0 rgba(37,99,235,0.10);
+    border: 1.5px solid rgba(59,130,246,0.13);
     backdrop-filter: blur(10px);
-    padding: 0.75rem 1.5rem;
-    border-radius: 50px;
-    margin-bottom: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    animation: slideIn 0.7s cubic-bezier(.4,2,.6,1);
 }
 
-.status-indicator {
-    font-size: 1.2rem;
-    animation: pulse 2s infinite;
+/* --- Enhanced Buttons --- */
+.btn-primary, .btn-secondary {
+    box-shadow: 0 4px 16px 0 rgba(37,99,235,0.10);
+    transition: background 0.3s, color 0.3s, transform 0.2s, box-shadow 0.3s;
 }
-
-.status-indicator.ready {
-    color: #10b981;
+.btn-primary {
+    background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+    color: #fff;
+    border: none;
 }
-
-.status-indicator.starting {
-    color: #f59e0b;
+.btn-primary:hover {
+    background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 32px 0 rgba(37,99,235,0.18);
 }
-
-.status-indicator.active {
+.btn-secondary {
+    background: rgba(255,255,255,0.08);
     color: #2563eb;
+    border: 2px solid #2563eb;
+}
+.btn-secondary:hover {
+    background: #2563eb;
+    color: #fff;
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 32px 0 rgba(37,99,235,0.18);
 }
 
-.status-indicator.ended {
-    color: #ef4444;
+/* --- Status Indicator Polish --- */
+.demo-status {
+    box-shadow: 0 2px 12px 0 rgba(16,185,129,0.10);
+    border: 1.5px solid rgba(16,185,129,0.18);
+    background: rgba(16,185,129,0.10);
+    font-size: 1.1rem;
 }
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+.status-indicator {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 0 6px #10b98188);
 }
-
 .status-text {
-    color: var(--off-white);
-    font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
 }
 
 /* Demo Features Grid */
@@ -344,6 +387,18 @@
     line-height: 1.5;
 }
 
+/* --- Section Dividers (SVG Waves) --- */
+.section-divider {
+    display: block;
+    width: 100%;
+    height: 60px;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+    background: none;
+    border: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .demo-hero-content {
@@ -429,4 +484,48 @@
 
 .copy-btn.copied::after {
     content: " ✓";
+}
+
+/* --- Entrance Animations --- */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.demo-hero-content, .demo-info, .demo-controls, .demo-session, .demo-architecture, .footer {
+    animation: fadeUp 1s cubic-bezier(.4,2,.6,1);
+}
+.demo-info { animation-delay: 0.2s; }
+.demo-controls { animation-delay: 0.4s; }
+.demo-session { animation-delay: 0.6s; }
+.demo-architecture { animation-delay: 0.8s; }
+.footer { animation-delay: 1s; }
+
+/* --- Typography Polish --- */
+.hero-title {
+    font-size: 3.2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: #fff;
+    text-shadow: 0 2px 16px #2563eb22;
+}
+.hero-subtitle {
+    font-size: 1.3rem;
+    color: #dbeafe;
+    font-weight: 400;
+    margin-bottom: 2.5rem;
+}
+
+/* --- Responsive Tweaks --- */
+@media (max-width: 600px) {
+    .demo-hero-content {
+        padding: 1.5rem 0.5rem;
+        margin-top: 1.5rem;
+    }
+    .hero-title {
+        font-size: 2.1rem;
+    }
+    .demo-info {
+        gap: 1rem;
+        padding: 1rem 0;
+    }
 }
