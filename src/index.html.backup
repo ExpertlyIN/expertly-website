@@ -144,16 +144,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="contact-form">
-                    <form>
-                        <input type="text" placeholder="Your Name" required>
-                        <input type="email" placeholder="Your Email" required>
-                        <input type="text" placeholder="Company" required>
-                        <textarea placeholder="Tell us about your security needs" rows="4" required></textarea>
-                        <button type="submit" class="btn btn-primary">Send Message</button>
-                    </form>
-                </div>
             </div>
         </div>
     </section>
@@ -174,6 +164,7 @@
                     <h4>Company</h4>
                     <a href="#about">About Us</a>
                     <a href="#technology">Technology</a>
+                    <a href="blog/">Blog</a>
                     <a href="#contact">Contact</a>
                 </div>
             </div>
